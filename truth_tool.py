@@ -7,10 +7,12 @@
 import sys
 import tkinter as tk
 from PIL import ImageTk, Image
+from functools import partial
 
 FILE_LABEL_LEN = 9
 WIN_DIMS = '1200x800'
-CANVAS_DIM = 600
+CANVAS_DIM = 700
+SCROLL_MAG = 3
 
 def parse_labels(labels_f):
   ls = []
@@ -43,6 +45,16 @@ class TruthToolWindow:
     vbar.pack(side=tk.RIGHT, fill=tk.Y)
     vbar.config(command=self._canvas.yview)
     self._canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
+
+    # Scroll image via arrow keys.
+    def scroll(d, back, e):
+      name = ('x' if d else 'y') + 'view_scroll'
+      method = getattr(self._canvas, name)
+      method((-1 if back else 1) * SCROLL_MAG, 'units')
+    self._root.bind_all('<Left>', partial(scroll, True, True))
+    self._root.bind_all('<Right>', partial(scroll, True, False))
+    self._root.bind_all('<Up>', partial(scroll, False, True))
+    self._root.bind_all('<Down>', partial(scroll, False, False))
 
     # Make our self._canvas fill the whole self._frame.
     self._canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
