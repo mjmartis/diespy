@@ -21,6 +21,36 @@ def parse_labels(labels_f):
 
   return ls
 
+class TruthToolWindow:
+  def __init__(self, image_fn):
+    self._root = tk.Tk()
+    self._root.geometry(WIN_DIMS)
+
+    # Add a frame that can display our source image with scroll bars.
+    self._frame = tk.Frame(self._root, width=CANVAS_DIM, height=CANVAS_DIM)
+    self._frame.pack(anchor=tk.NW, fill=None, expand=False)
+    self._frame.pack_propagate(0)
+
+    # Add a canvas that actually displays our source image.
+    self._img = ImageTk.PhotoImage(Image.open(image_fn))
+    self._canvas = tk.Canvas(self._frame, scrollregion=(0, 0, self._img.width(), self._img.height()))
+
+    # Add scroll bars.
+    hbar = tk.Scrollbar(self._frame, orient=tk.HORIZONTAL)
+    hbar.pack(side=tk.BOTTOM, fill=tk.X)
+    hbar.config(command=self._canvas.xview)
+    vbar = tk.Scrollbar(self._frame, orient=tk.VERTICAL)
+    vbar.pack(side=tk.RIGHT, fill=tk.Y)
+    vbar.config(command=self._canvas.yview)
+    self._canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
+
+    # Make our self._canvas fill the whole self._frame.
+    self._canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+    self._canvas.create_image(0, 0, anchor=tk.NW, image=self._img)
+
+  def RunMainLoop(self):
+    self._root.mainloop()
+
 def main():
   if len(sys.argv) != 3:
     print(f'Usage: {sys.argv[0]} labels.csv imagefile')
@@ -36,32 +66,8 @@ def main():
       (file_label_idxs if len(l) == FILE_LABEL_LEN else label_idxs).append(i)
     file_label_idx = None if not file_label_idxs else file_label_idxs[0]
 
-  root = tk.Tk()
-  root.geometry(WIN_DIMS)
-
-  # Add a frame that can display our source image with scroll bars.
-  frame = tk.Frame(root, width=CANVAS_DIM, height=CANVAS_DIM)
-  frame.pack(anchor=tk.NW, fill=None, expand=False)
-  frame.pack_propagate(0)
-
-  # Add a canvas that actually displays our source image.
-  img = ImageTk.PhotoImage(Image.open(image_fn))
-  canvas = tk.Canvas(frame, scrollregion=(0, 0, img.width(), img.height()))
-
-  # Add scroll bars.
-  hbar = tk.Scrollbar(frame, orient=tk.HORIZONTAL)
-  hbar.pack(side=tk.BOTTOM, fill=tk.X)
-  hbar.config(command=canvas.xview)
-  vbar = tk.Scrollbar(frame, orient=tk.VERTICAL)
-  vbar.pack(side=tk.RIGHT, fill=tk.Y)
-  vbar.config(command=canvas.yview)
-  canvas.config(xscrollcommand=hbar.set, yscrollcommand=vbar.set)
-
-  # Make our canvas fill the whole frame.
-  canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
-  canvas.create_image(0, 0, anchor=tk.NW, image=img)
-
-  root.mainloop()
+    win = TruthToolWindow(image_fn)
+    win.RunMainLoop()
 
 if __name__ == '__main__':
   main()
