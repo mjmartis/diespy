@@ -38,6 +38,13 @@ def parse_labels(labels_f):
 class TruthToolWindow:
 
   def __init__(self, image_fn):
+    self._proj_vertices = []
+
+    self._root = None
+    self._frame = None
+    self._img = None
+    self._canvas = None
+
     self._root = tk.Tk()
     self._root.geometry(WIN_DIMS)
 
@@ -76,12 +83,34 @@ class TruthToolWindow:
     self._canvas.create_image(0, 0, anchor=tk.NW, image=self._img)
 
     # Allow drawing on canvas.
-    self._canvas.bind("<ButtonPress-1>", lambda e: self._DrawPoint(e.x, e.y))
+    self._canvas.bind("<ButtonPress-1>", lambda e: self._HandleClick(e))
 
-  def _DrawPoint(self, x, y):
-    print(x, y)
+  def _HandleClick(self, e):
+    # Clear old rect if we are starting a new one.
+    if len(self._proj_vertices) == 4:
+      self._canvas.create_image(0, 0, anchor=tk.NW, image=self._img)
+      self._proj_vertices = []
+
+    x, y = self._canvas.canvasx(e.x), self._canvas.canvasy(e.y)
+    self._DrawPoint(x, y, 'red')
+    self._proj_vertices.append((x, y))
+
+    # Draw quad defined by points.
+    if len(self._proj_vertices) == 4:
+      for i in range(4):
+        ax, ay = self._proj_vertices[i]
+        bx, by = self._proj_vertices[(i + 1) % 4]
+
+        self._canvas.create_line(ax, ay, bx, by, fill='red')
+
+  def _DrawPoint(self, x, y, col):
     self._canvas.create_oval(
-        x - POINT_RAD, y - POINT_RAD, x + POINT_RAD, y + POINT_RAD, fill='red')
+        x - POINT_RAD,
+        y - POINT_RAD,
+        x + POINT_RAD,
+        y + POINT_RAD,
+        outline=col,
+        fill=col)
 
   def RunMainLoop(self):
     self._root.mainloop()
